@@ -1,0 +1,14 @@
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+#inputs {
+    flex: 1;
+    max-height: 40px;
+}
+
+#results {
+    flex: 1;
+}
