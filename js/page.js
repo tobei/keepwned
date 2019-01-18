@@ -5,17 +5,23 @@ function checkPassword(entry) {
         document.querySelector('#results').textContent += `\n${text}`;
     }
 
-    function successCallback(result) {
-        switch (result.status) {
-            case 200: append(`${entry.title} -> PAWNED !`); break;
-            case 404: append(`${entry.title} -> OK`); break;
-            default: apprend(`API ERROR: ${entry.title} -> ERROR: [${result.statusText}]`); break;
-        }
+    async function successCallback(result) {
+            if (result.ok) {
+                const hashes = await result.text();
+                const expression = new RegExp(`^${entry.hash.substr(5).toUpperCase()}:`, 'm');
+                if (expression.test(hashes)) {
+                    append(`HACKED: ${entry.title} -> ${JSON.stringify(result)}`);
+                } else {
+                    append(`OK: ${entry.title} -> ${JSON.stringify(result)}`);
+                }
+            } else {
+                append('DEAD CALL');
+            }
     }
     function failedCallback(result) {
         append(`BROKEN NET: ${entry.title} -> ${JSON.stringify(result)}`);
     }
-    fetch(`https://haveibeenpwned.com/api/v2/pwnedpassword/${entry.hash}`).then(successCallback, failedCallback);
+    fetch(`https://api.pwnedpasswords.com/range/${entry.hash.substr(0, 5)}`, {mode: 'cors'}).then(successCallback, failedCallback);
 }
 
 document.querySelector('#loadFile').addEventListener('click', (event) => {
@@ -36,9 +42,10 @@ document.querySelector('#loadFile').addEventListener('click', (event) => {
                    }
                }
            });
-           entries.sort((a, b) => a.title.localeCompare(b.title));
            let itemIndex = 0;
-           let id = setInterval(() => {checkPassword(entries[itemIndex]); itemIndex++; if (itemIndex >= entries.length) {clearInterval(id)}}, 2000);
+           for (let entry of entries) {
+               checkPassword(entry);
+           }
         }).catch(error => {document.querySelector('#results').textContent = `ERROR: ${JSON.stringify(error)}`});
     }
     fileReader.readAsArrayBuffer(file);
